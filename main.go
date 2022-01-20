@@ -11,12 +11,14 @@ import (
 	"github.com/arganaphangquestian/gorest/models"
 	"github.com/arganaphangquestian/gorest/utils"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/segmentio/ksuid"
 )
 
 var USERS = []models.User{}
 
 func init() {
+	godotenv.Load()
 	password, _ := utils.CreateHash("password")
 	USERS = append(USERS, []models.User{
 		{ID: ksuid.New().String(), Email: "user@mail.com", Password: *password, Name: "User"},
@@ -26,17 +28,18 @@ func init() {
 }
 
 func main() {
-	mux := mux.NewRouter()
+	r := mux.NewRouter()
 
 	// Index
-	mux.HandleFunc("/", index).Methods("GET")
+	r.HandleFunc("/", index).Methods("GET")
 	// Login
-	mux.HandleFunc("/login", login).Methods("POST")
+	r.HandleFunc("/login", login).Methods("POST")
 	// Protected Router
-	mux.HandleFunc("/dashboard", dashboard).Methods("GET")
+	r.HandleFunc("/dashboard", dashboard).Methods("GET")
 
 	fmt.Println("Server is running at PORT 8000")
-	if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%s", os.Getenv("PORT")), mux); err != nil {
+	http.Handle("/", r)
+	if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%s", os.Getenv("PORT")), r); err != nil {
 		log.Fatal(err)
 	}
 }
