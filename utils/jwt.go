@@ -13,7 +13,7 @@ type UserToken struct {
 }
 
 func Verify(tokenString string) (*string, error) {
-	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if jwt.GetSigningMethod("HS256") != token.Method {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -25,18 +25,17 @@ func Verify(tokenString string) (*string, error) {
 	if !token.Valid {
 		return nil, fmt.Errorf("token not valid")
 	}
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(*jwt.StandardClaims)
 	if !ok {
 		return nil, fmt.Errorf("token can't be parsed")
 	}
-	id := fmt.Sprintf("%s", claims["id"])
-	return &id, nil
+	return &claims.Id, nil
 }
 
 func CreateToken(userID string) (*UserToken, error) {
-	accessToken := jwt.MapClaims{}
-	accessToken["id"] = userID
-	accessToken["exp"] = time.Now().Add(time.Hour * 5).Unix() // 5 Hour
+	accessToken := jwt.StandardClaims{}
+	accessToken.Id = userID
+	accessToken.ExpiresAt = time.Now().Add(time.Hour * 5).Unix() // 5 Hour
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessToken)
 	aToken, err := at.SignedString([]byte(os.Getenv("SECRET_KEY")))
 	if err != nil {

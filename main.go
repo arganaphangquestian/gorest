@@ -71,11 +71,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"message": "Email or Password incorrect",
 		})
+		return
 	}
 	access_token, _ := utils.CreateToken(user.ID) // Always Success
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message":      "Login success",
-		"access_token": access_token,
+		"access_token": access_token.AccessToken,
 	})
 }
 
@@ -86,12 +87,14 @@ func dashboard(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"message": "Token doesn't exist",
 		})
+		return
 	}
 	userId, err := utils.Verify(header[1])
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"message": "Token invalid",
 		})
+		return
 	}
 	var user *models.User
 	for _, v := range USERS {
@@ -103,5 +106,6 @@ func dashboard(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Dashboard Yeay",
 		"user":    user,
+		"users":   USERS,
 	})
 }
